@@ -1,22 +1,33 @@
 import { useState } from "react";
+// Hook use state permite tener un stado en el componente que al cambiar vuelve a renderizar los cambios del componente para reflejar en el ui los cambios
 import confetti from "canvas-confetti";
 import "./App.css";
 import { Square } from "./components/Square";
 import { TURNS } from "./constants.js";
-import { checkWinner,checkEndGame } from "./utils/board";
+import { checkWinner, checkEndGame } from "./utils/board";
 import { WinnerModal } from "./components/WinnerModal.jsx";
 
 function App() {
-  const [board, setBoard] = useState(Array(9).fill(null));
-  const [turn, setTurn] = useState(TURNS.X);
+  
+  const [board, setBoard] = useState(() => {
+    const BoardFromStorage = window.localStorage.getItem("board");
+    return BoardFromStorage
+      ? JSON.parse(BoardFromStorage)
+      : Array(9).fill(null);
+  });
+  const [turn, setTurn] = useState(() => {
+    const TurnFromStorage = window.localStorage.getItem("turn");
+    return TurnFromStorage ?? TURNS.X;
+  });
   const [winner, SetWinner] = useState(null);
 
   const resetGame = () => {
     setBoard(Array(9).fill(null));
     setTurn(TURNS.X);
     SetWinner(null);
+    window.localStorage.removeItem("board");
+    window.localStorage.removeItem("turn");
   };
-
 
   //Los estados siempre hay que tratarlos como inmutables porque puede haber problemas de renderizado
   const updateBoard = (index) => {
@@ -29,6 +40,9 @@ function App() {
     //cambiar el turno
     const newTurn = turn === TURNS.X ? TURNS.O : TURNS.X;
     setTurn(newTurn);
+    //guadar partida
+    window.localStorage.setItem("board", JSON.stringify(newBoard));
+    window.localStorage.setItem("turn", newTurn);
     //revisar si hay ganador
     const newWinner = checkWinner(newBoard);
     if (newWinner) {
@@ -64,8 +78,7 @@ function App() {
         <Square isSelected={turn === TURNS.X}>{TURNS.X}</Square>
         <Square isSelected={turn === TURNS.O}>{TURNS.O}</Square>
       </section>
-      <WinnerModal winner={winner} resetGame={resetGame}/>
-
+      <WinnerModal winner={winner} resetGame={resetGame} />
     </main>
   );
 }
